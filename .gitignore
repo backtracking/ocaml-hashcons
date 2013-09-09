@@ -7,3 +7,16 @@
 *.cmx
 *.cmxs
 *.cmxa
+export
+hashcons.tex
+config.cache
+config.status
+META
+Makefile
+hashcons.pdf
+autom4te.cache/
+autom4te.cache
+a.out
+configure
+*.aux
+*.log
