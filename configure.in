@@ -29,7 +29,7 @@
 
 # check for one particular file of the sources
 # ADAPT THE FOLLOWING LINE TO YOUR SOURCES!
-AC_INIT(hashcons.mli, 1.0)
+AC_INIT(hashcons.mli, 1.1)
 
 # Check for Ocaml compilers
 

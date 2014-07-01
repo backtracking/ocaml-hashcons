@@ -107,7 +107,7 @@ and add t d =
   loop 0
 
 let hashcons t d =
-  let hkey = Hashtbl.hash d in
+  let hkey = Hashtbl.hash d land max_int in
   let index = hkey mod (Array.length t.table) in
   let bucket = t.table.(index) in
   let sz = Weak.length bucket in
@@ -248,7 +248,7 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     loop 0
 
   let hashcons t d =
-    let hkey = H.hash d in
+    let hkey = H.hash d land max_int in
     let index = hkey mod (Array.length t.table) in
     let bucket = t.table.(index) in
     let sz = Weak.length bucket in
