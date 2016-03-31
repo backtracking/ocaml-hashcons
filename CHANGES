@@ -1,4 +1,8 @@
 
+version 1.2
+===========
+  o fixed bug in Hset (reported by Jan Midtgaard)
+
 version 1.1
 ===========
  o do not assume anymore that the hash function returns a nonnegative value

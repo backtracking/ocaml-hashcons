@@ -87,6 +87,9 @@ let branching_bit p0 p1 = lowest_bit (p0 lxor p1)
 
 let mask p m = p land (m-1)
 
+(*s When comparing branching bits, one has to be careful with the sign bit *)
+let unsigned_lt n m = n >= 0 && (m < 0 || n < m)
+
 let join (p0,t0,p1,t1) =
   let m = branching_bit p0 p1 in
   if zero_bit p0 m then
@@ -163,13 +166,13 @@ let rec merge = function
       if m == n && match_prefix q p m then
 	(* The trees have the same prefix. Merge the subtrees. *)
 	Branch (p, m, merge (s0,t0), merge (s1,t1))
-      else if m < n && match_prefix q p m then
+      else if unsigned_lt m n && match_prefix q p m then
 	(* [q] contains [p]. Merge [t] with a subtree of [s]. *)
 	if zero_bit q m then
 	  Branch (p, m, merge (s0,t), s1)
         else
 	  Branch (p, m, s0, merge (s1,t))
-      else if m > n && match_prefix p q n then
+      else if unsigned_lt n m && match_prefix p q n then
 	(* [p] contains [q]. Merge [s] with a subtree of [t]. *)
 	if zero_bit p n then
 	  Branch (q, n, merge (s,t0), t1)
@@ -194,7 +197,7 @@ let rec subset s1 s2 = match (s1,s2) with
   | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
       if m1 == m2 && p1 == p2 then
 	subset l1 l2 && subset r1 r2
-      else if m1 > m2 && match_prefix p1 p2 m2 then
+      else if unsigned_lt m2 m1 && match_prefix p1 p2 m2 then
 	if zero_bit p1 m2 then
 	  subset l1 l2 && subset r1 l2
 	else
@@ -214,9 +217,9 @@ let rec inter s1 s2 = match (s1,s2) with
   | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
       if m1 == m2 && p1 == p2 then
 	merge (inter l1 l2, inter r1 r2)
-      else if m1 < m2 && match_prefix p2 p1 m1 then
+      else if unsigned_lt m1 m2 && match_prefix p2 p1 m1 then
 	inter (if zero_bit p2 m1 then l1 else r1) s2
-      else if m1 > m2 && match_prefix p1 p2 m2 then
+      else if unsigned_lt m2 m1 && match_prefix p1 p2 m2 then
 	inter s1 (if zero_bit p1 m2 then l2 else r2)
       else
 	Empty
@@ -229,12 +232,12 @@ let rec diff s1 s2 = match (s1,s2) with
   | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
       if m1 == m2 && p1 == p2 then
 	merge (diff l1 l2, diff r1 r2)
-      else if m1 < m2 && match_prefix p2 p1 m1 then
+      else if unsigned_lt m1 m2 && match_prefix p2 p1 m1 then
 	if zero_bit p2 m1 then
 	  merge (diff l1 s2, r1)
 	else
 	  merge (l1, diff r1 s2)
-      else if m1 > m2 && match_prefix p1 p2 m2 then
+      else if unsigned_lt m2 m1 && match_prefix p1 p2 m2 then
 	if zero_bit p1 m2 then diff s1 l2 else diff s1 r2
       else
 	s1
@@ -334,9 +337,9 @@ let rec intersect s1 s2 = match (s1,s2) with
   | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
       if m1 == m2 && p1 == p2 then
         intersect l1 l2 || intersect r1 r2
-      else if m1 < m2 && match_prefix p2 p1 m1 then
+      else if unsigned_lt m1 m2 && match_prefix p2 p1 m1 then
         intersect (if zero_bit p2 m1 then l1 else r1) s2
-      else if m1 > m2 && match_prefix p1 p2 m2 then
+      else if unsigned_lt m2 m1 && match_prefix p1 p2 m2 then
         intersect s1 (if zero_bit p1 m2 then l2 else r2)
       else
         false
