@@ -1,9 +1,3 @@
-hashcons.cmi :
-hmap.cmi : hashcons.cmi
-hset.cmi : hashcons.cmi
 hashcons.cmo : hashcons.cmi
 hashcons.cmx : hashcons.cmi
-hmap.cmo : hashcons.cmi hmap.cmi
-hmap.cmx : hashcons.cmx hmap.cmi
-hset.cmo : hashcons.cmi hset.cmi
-hset.cmx : hashcons.cmx hset.cmi
+hashcons.cmi :
