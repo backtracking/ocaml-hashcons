@@ -17,7 +17,8 @@
 LIBDIR = @LIBDIR@
 OCAMLFIND=@OCAMLFIND@
 
-CMO = hashcons.cmo hset.cmo hmap.cmo
+CMO = hashcons.cmo
+
 CMI = $(CMO:.cmo=.cmi)
 MLI = $(CMO:.cmo=.mli)
 CMX = $(CMO:.cmo=.cmx)

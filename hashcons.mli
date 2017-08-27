@@ -83,3 +83,59 @@ module type S =
   end
 
 module Make(H : HashedType) : (S with type key = H.t)
+
+
+module Hmap : sig
+  type (+'a, 'b) t
+  type 'a key = 'a hash_consed
+
+  val empty : ('a, 'b) t
+  val add : 'a key -> 'b -> ('a, 'b) t -> ('a, 'b) t
+  val find : 'a key -> ('a, 'b) t -> 'b
+  val remove : 'a key -> ('a, 'b) t -> ('a, 'b) t
+  val mem :  'a key -> ('a, 'b) t -> bool
+  val iter : ('a key -> 'b -> unit) -> ('a, 'b) t -> unit
+  val map : ('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+  val mapi : ('a key -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+  val fold : ('a key -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+end
+
+module Hset : sig
+  type 'a t
+  type 'a elt = 'a hash_consed
+  val empty : 'a t
+  val is_empty : 'a t -> bool
+  val mem : 'a elt -> 'a t -> bool
+  val add : 'a elt -> 'a t -> 'a t
+  val singleton : 'a elt -> 'a t
+  val remove : 'a elt -> 'a t -> 'a t
+  val union : 'a t -> 'a t -> 'a t
+  val subset : 'a t -> 'a t -> bool
+  val inter : 'a t -> 'a t -> 'a t
+  val diff : 'a t -> 'a t -> 'a t
+  val equal : 'a t -> 'a t -> bool
+  val compare : 'a t -> 'a t -> int
+  val elements : 'a t -> 'a elt list
+  val choose : 'a t -> 'a elt
+  val cardinal : 'a t -> int
+  val iter : ('a elt -> unit) -> 'a t -> unit
+  val fold : ('a elt -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val for_all : ('a elt -> bool) -> 'a t -> bool
+  val exists : ('a elt -> bool) -> 'a t -> bool
+  val filter : ('a elt -> bool) -> 'a t -> 'a t
+  val partition : ('a elt -> bool) -> 'a t -> 'a t * 'a t
+
+  (*s Warning: [min_elt] and [max_elt] are linear w.r.t. the size of the
+      set. In other words, [min_elt t] is barely more efficient than [fold
+      min t (choose t)]. *)
+  val min_elt : 'a t -> 'a elt
+  val max_elt : 'a t -> 'a elt
+
+  (*s Additional functions not appearing in the signature [Set.S] from ocaml
+      standard library. *)
+
+  (* [intersect u v] determines if sets [u] and [v] have a non-empty
+     intersection. *)
+  val intersect : 'a t -> 'a t -> bool
+end
+
