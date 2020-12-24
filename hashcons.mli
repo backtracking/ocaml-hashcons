@@ -36,9 +36,10 @@
     more referenced from anywhere else can be erased by the GC. *)
 
 type +'a hash_consed = private {
-  hkey : int;
+  hkey: int;
   tag : int;
-  node : 'a }
+  node: 'a;
+}
 
 (*s Generic part, using ocaml generic equality and hash function. *)
 

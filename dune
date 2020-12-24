@@ -1,2 +1,8 @@
 (library
- (public_name hashcons))
+ (public_name hashcons)
+ (modules hashcons))
+
+(test
+ (name test)
+ (modules test)
+ (libraries hashcons))
