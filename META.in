@@ -1,5 +1,0 @@
-name = "hashcons"
-version = "@PACKAGE_VERSION@"
-description = "Hash-consing library"
-archive(byte) = "hashcons.cmo"
-archive(native) = "hashcons.cmx"
