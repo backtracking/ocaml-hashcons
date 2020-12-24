@@ -20,3 +20,5 @@ a.out
 configure
 *.aux
 *.log
+.merlin
+_build/
