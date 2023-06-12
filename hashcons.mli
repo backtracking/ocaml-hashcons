@@ -91,7 +91,7 @@ module Make(H : HashedType) : (S with type key = H.t)
 
 
 module Hmap : sig
-  type (+'a, 'b) t
+  type (+'a, +!'b) t
   type 'a key = 'a hash_consed
 
   val empty : ('a, 'b) t
