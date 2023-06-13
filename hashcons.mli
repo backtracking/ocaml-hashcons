@@ -144,6 +144,11 @@ module Hmap : sig
   val find_last_opt : ('a key -> bool) -> ('a, 'b) t -> ('a key * 'b) option
   val find_first : ('a key -> bool) -> ('a, 'b) t -> 'a key * 'b
   val find_last : ('a key -> bool) -> ('a, 'b) t -> 'a key * 'b
+
+  (*s Extra functions not in [Map.S], a slightly faster find *)
+  val find_any : ('a key -> 'b -> bool) -> ('a, 'b) t -> 'a key * 'b
+  val find_any_opt : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a key * 'b) option
+  val is_singleton : ('a, 'b) t -> ('a key * 'b) option
 end
 
 module Hset : sig

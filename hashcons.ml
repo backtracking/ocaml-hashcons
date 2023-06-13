@@ -605,6 +605,25 @@ module Hmap = struct
 
   let add_seq seq m = Seq.fold_left (fun m (k, v) -> add k v m) m seq
   let of_seq s = add_seq s Empty
+
+  (*s Extra functions not in [Map.S] *)
+
+  let find_any (type a b) f (m : (a, b) t) =
+    let exception Found of (a key * b) in
+    try
+      iter (fun k v -> if f k v then raise (Found (k, v))) m;
+      raise Not_found
+    with Found x -> x
+  let find_any_opt (type a b) f (m : (a, b) t) =
+    let exception Found of (a key * b) in
+    try
+      iter (fun k v -> if f k v then raise (Found (k, v))) m;
+      None
+    with Found x -> Some x
+
+  let is_singleton = function
+    | Leaf(k,v) -> Some (k,v)
+    | _ -> None
 end
 
 module Hset = struct
