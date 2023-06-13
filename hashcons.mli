@@ -148,7 +148,10 @@ module Hmap : sig
   (*s Extra functions not in [Map.S], a slightly faster find *)
   val find_any : ('a key -> 'b -> bool) -> ('a, 'b) t -> 'a key * 'b
   val find_any_opt : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a key * 'b) option
+
   val is_singleton : ('a, 'b) t -> ('a key * 'b) option
+    (** if the map is a singleton, return the unique binding, 
+        else return [None] *)
 end
 
 module Hset : sig
