@@ -279,6 +279,9 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
 end
 
 
+(*s When comparing branching bits, one has to be careful with the sign bit *)
+let unsigned_lt n m = n >= 0 && (m < 0 || n < m)
+
 module Hmap = struct
 
   type 'a key = 'a hash_consed
@@ -289,6 +292,8 @@ module Hmap = struct
     | Branch of int * int * ('a, 'b) t * ('a, 'b) t
 
   let empty = Empty
+
+  let is_empty = function Empty -> true | _ -> false
 
   let zero_bit k m = (k land m) == 0
 
@@ -301,6 +306,13 @@ module Hmap = struct
     | Empty -> raise Not_found
     | Leaf (j,x) -> if k.tag == j.tag then x else raise Not_found
     | Branch (_, m, l, r) -> find k (if zero_bit k.tag m then l else r)
+
+  let rec find_opt k = function
+    | Empty -> None
+    | Leaf (j,x) -> if k.tag == j.tag then Some x else None
+    | Branch (_, m, l, r) -> find_opt k (if zero_bit k.tag m then l else r)
+
+  let singleton k v = Leaf(k,v)
 
   let lowest_bit x = x land (-x)
 
@@ -356,10 +368,34 @@ module Hmap = struct
     in
     rmv t
 
+  let rec update k f = function
+    | Empty -> (match f None with Some v -> Leaf(k,v) | None -> Empty)
+    | Leaf (j,x) as t ->
+        if k.tag == j.tag then match f (Some x) with
+          | None -> Empty
+          | Some x -> Leaf(j,x)
+        else (match f None with
+          | None -> t
+          | Some x -> join (k.tag, Leaf (k,x), j.tag, t))
+    | Branch (p, m, t0, t1) as t ->
+        if match_prefix k.tag p m then
+          if zero_bit k.tag m then
+            branch (p, m, update k f t0, t1)
+          else
+            branch (p, m, t0, update k f t1)
+        else match f None with
+        | None -> t
+        | Some x -> join (k.tag, Leaf(k,x), p, t)
+
   let rec iter f = function
     | Empty -> ()
     | Leaf (k,x) -> f k x
     | Branch (_,_,t0,t1) -> iter f t0; iter f t1
+
+  let rec cardinal = function
+    | Empty -> 0
+    | Leaf(_,_) -> 1
+    | Branch(_,_,l,r) -> cardinal l + cardinal r
 
   let rec map f = function
     | Empty -> Empty
@@ -375,6 +411,200 @@ module Hmap = struct
     | Empty -> accu
     | Leaf (k,x) -> f k x accu
     | Branch (_,_,t0,t1) -> fold f t0 (fold f t1 accu)
+
+  let rec exists f = function
+    | Empty -> false
+    | Leaf (k,v) -> f k v
+    | Branch(_,_,l,r) -> exists f l || exists f r
+
+  let rec for_all f = function
+    | Empty -> true
+    | Leaf (k,v) -> f k v
+    | Branch(_,_,l,r) -> for_all f l && for_all f r
+
+  let rec filter f = function
+    | Empty -> Empty
+    | Leaf(k,v) as t -> if f k v then t else Empty
+    | Branch(p,m,t0,t1) -> branch(p,m,filter f t0, filter f t1)
+
+  let rec filter_map f = function
+    | Empty -> Empty
+    | Leaf(k,v) -> (match f k v with Some v' -> Leaf(k,v') | None -> Empty)
+    | Branch(p,m,t0,t1) -> branch(p,m,filter_map f t0, filter_map f t1)
+
+  let split k m =
+    fold
+      (fun k' v (lt, data, gt) ->
+        if k.tag = k'.tag then (lt, Some v, gt)
+        else if k.tag < k'.tag then (lt, data, add k' v gt)
+        else (add k' v lt, data, gt))
+      m (empty, None, empty)
+
+  let bindings s =
+    let rec bindings_aux acc = function
+      | Empty -> acc
+      | Leaf (k,v) -> (k,v) :: acc
+      | Branch (_,_,l,r) -> bindings_aux (bindings_aux acc l) r
+    in
+    bindings_aux [] s
+
+  let to_seq s =
+    let rec to_seq_aux acc = function
+      | Empty -> acc
+      | Leaf (k,v) -> Seq.cons (k,v) acc
+      | Branch (_,_,l,r) -> to_seq_aux (to_seq_aux acc l) r
+    in
+    to_seq_aux Seq.empty s
+
+  let partition f m = fold (fun k v (m_true, m_false) ->
+      if f k v then (add k v m_true, m_false) else (m_true, add k v m_false)
+    ) m (Empty,Empty)
+
+  let rec choose = function
+    | Empty -> raise Not_found
+    | Leaf (k, v) -> (k, v)
+    | Branch (_, _, t0, _) -> choose t0
+
+  let rec choose_opt = function
+    | Empty -> None
+    | Leaf (k, v) -> Some (k, v)
+    | Branch (_, _, t0, _) -> choose_opt t0
+
+  let rec equal equal_v t1 t2 = match t1, t2 with
+    | Empty, Empty -> true
+    | Leaf (k1,v1), Leaf (k2,v2) -> k1 = k2 && equal_v v1 v2
+    | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
+        p1 = p2 && m1 = m2 && equal equal_v l1 l2 && equal equal_v r1 r2
+    | _ -> false
+
+  let rec compare compare_v t1 t2 = match t1,t2 with
+    | Empty, Empty -> 0
+    | Empty, _ -> -1
+    | _, Empty -> 1
+    | Leaf (k1,v1), Leaf (k2,v2) ->
+        let cmp = Int.compare k1.tag k2.tag in
+        if cmp = 0 then compare_v v1 v2 else cmp
+    | Leaf _, Branch _ -> -1
+    | Branch _, Leaf _ -> 1
+    | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
+        let cmp = Int.compare p1 p2 in
+        if cmp <> 0 then cmp else
+        let cmp = Int.compare m1 m2 in
+        if cmp <> 0 then cmp else
+        let cmp = compare compare_v l1 l2 in
+        if cmp <> 0 then cmp else
+        compare compare_v r1 r2
+
+  let merge f l r =
+    let merge_l t = filter_map (fun k v -> f k (Some v) None) t in
+    let merge_r t = filter_map (fun k v -> f k None (Some v)) t in
+    let rec merge_aux l r = match l, r with
+    | Empty, t -> merge_r t
+    | t, Empty -> merge_l t
+    | Leaf (k,v1), t ->
+        filter_map (
+          fun k' v -> f k' (if k.tag = k'.tag then (Some v1) else None) (Some v)
+        ) t
+    | t, Leaf (k,v2) ->
+        filter_map (
+          fun k' v -> f k' (Some v) (if k.tag = k'.tag then (Some v2) else None)
+        ) t
+    | (Branch (p,m,l0,l1) as l), (Branch (q,n,r0,r1) as r) ->
+        if m = n && match_prefix q p m
+        then branch (p, m, merge_aux l0 r0, merge_aux l1 r1)
+        else if unsigned_lt m n && match_prefix q p m then
+          (* [q] contains [p]. Merge [t] with a subtree of [s]. *)
+          if zero_bit q m
+          then branch (p, m, merge_aux l0 r, merge_l l1)
+          else branch (p, m, merge_l l0, merge_aux l1 r)
+        else if unsigned_lt n m && match_prefix p q n then
+          (* [p] contains [q]. Merge [s] with a subtree of [t]. *)
+          if zero_bit p n
+          then branch (q, n, merge_aux l r0, merge_r r1)
+          else branch (q, n, merge_r r0, merge_aux l r1)
+        else
+          (* The prefixes disagree, so the trees are disjoint. *)
+          join (p, merge_l l, q, merge_r r)
+        in merge_aux l r
+
+  let rec union f l r = match l, r with
+    | Empty, t
+    | t, Empty -> t
+    | Leaf (k,v1), t ->
+        update k (function None -> Some v1 | Some v2 -> f k v1 v2) t
+    | t, Leaf (k,v2) ->
+        update k (function None -> Some v2 | Some v1 -> f k v1 v2) t
+    | (Branch (p,m,s0,s1) as s), (Branch (q,n,t0,t1) as t) ->
+        if m = n && match_prefix q p m
+        then branch (p, m, union f s0 t0, union f s1 t1)
+        else if unsigned_lt m n && match_prefix q p m then
+          (* [q] contains [p]. Merge [t] with a subtree of [s]. *)
+          if zero_bit q m
+          then branch (p, m, union f s0 t, s1)
+          else branch (p, m, s0, union f s1 t)
+        else if unsigned_lt n m && match_prefix p q n then
+          (* [p] contains [q]. Merge [s] with a subtree of [t]. *)
+          if zero_bit p n
+          then branch (q, n, union f s t0, t1)
+          else branch (q, n, t0, union f s t1)
+        else
+          (* The prefixes disagree. *)
+          join (p, s, q, t)
+
+  let min_binding_opt m =
+    fold
+      (fun k v b ->
+        match b with
+        | None -> Some (k, v)
+        | Some (k', _) -> if k'.tag <= k.tag then b else Some (k, v))
+      m None
+
+  let min_binding m = match min_binding_opt m with
+    | Some x -> x
+    | None -> raise Not_found
+
+  let max_binding_opt m =
+    fold
+      (fun k v b ->
+        match b with
+        | None -> Some (k, v)
+        | Some (k', _) -> if k'.tag >= k.tag then b else Some (k, v))
+      m None
+
+  let max_binding m = match max_binding_opt m with
+    | Some x -> x
+    | None -> raise Not_found
+
+  let find_first_opt f m =
+    fold
+      (fun k v acc ->
+        match acc with
+        | None -> if f k then Some (k, v) else None
+        | Some (k', _) ->
+            if k'.tag <= k.tag then acc else
+            if f k then Some (k, v) else acc)
+      m None
+
+  let find_first f m = match find_first_opt f m with
+    | Some x -> x
+    | None -> raise Not_found
+
+  let find_last_opt f m =
+    fold
+      (fun k v acc ->
+        match acc with
+        | None -> if f k then Some (k, v) else None
+        | Some (k', _) ->
+            if k'.tag >= k.tag then acc else
+            if f k then Some (k, v) else acc)
+      m None
+
+  let find_last f m = match find_last_opt f m with
+    | Some x -> x
+    | None -> raise Not_found
+
+  let add_seq seq m = Seq.fold_left (fun m (k, v) -> add k v m) m seq
+  let of_seq s = add_seq s Empty
 end
 
 module Hset = struct
@@ -449,9 +679,6 @@ module Hset = struct
   let branching_bit p0 p1 = lowest_bit (p0 lxor p1)
 
   let mask p m = p land (m-1)
-
-  (*s When comparing branching bits, one has to be careful with the sign bit *)
-  let unsigned_lt n m = n >= 0 && (m < 0 || n < m)
 
   let join (p0,t0,p1,t1) =
     let m = branching_bit p0 p1 in
