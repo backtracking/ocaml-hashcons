@@ -434,6 +434,9 @@ module Hset = struct
     | Leaf j -> k.tag == j.tag
     | Branch (_, m, l, r) -> mem k (if zero_bit k.tag m then l else r)
 
+  let find k s = if mem k s then k else raise Not_found
+  let find_opt k s = if mem k s then Some k else None
+
   (*s The following operation [join] will be used in both insertion and
       union. Given two non-empty trees [t0] and [t1] with longest common
       prefixes [p0] and [p1] respectively, which are supposed to
@@ -606,8 +609,8 @@ module Hset = struct
 	s1
 
   (*s All the following operations ([cardinal], [iter], [fold], [for_all],
-      [exists], [filter], [partition], [choose], [elements]) are
-      implemented as for any other kind of binary trees. *)
+      [exists], [filter], [partition], [choose], [choose_opt], [elements],
+      [to_seq]) are implemented as for any other kind of binary trees. *)
 
   let rec cardinal = function
     | Empty -> 0
@@ -652,6 +655,11 @@ module Hset = struct
     | Leaf k -> k
     | Branch (_, _,t0,_) -> choose t0   (* we know that [t0] is non-empty *)
 
+  let rec choose_opt = function
+    | Empty -> None
+    | Leaf k -> Some k
+    | Branch (_, _,t0,_) -> choose_opt t0   (* we know that [t0] is non-empty *)
+
   let elements s =
     let rec elements_aux acc = function
       | Empty -> acc
@@ -659,6 +667,36 @@ module Hset = struct
       | Branch (_,_,l,r) -> elements_aux (elements_aux acc l) r
     in
     elements_aux [] s
+
+  let to_seq s =
+    let rec to_seq_aux acc = function
+      | Empty -> acc
+      | Leaf k -> Seq.cons k acc
+      | Branch (_,_,l,r) -> to_seq_aux (to_seq_aux acc r) l
+    in
+    to_seq_aux Seq.empty s
+
+  let split elt s =
+    fold (fun elt' (lt, present, gt) ->
+      if elt'.tag < elt.tag then (add elt' lt, present, gt) else
+      if elt'.tag > elt.tag then (lt, present, add elt' gt) else
+      (lt, true, gt)
+    ) s (Empty, false, Empty)
+
+  (*s [map] and [filter_map] are implemented via [fold] and [add]
+      since we can't relate the tag of [f elt] to that of [elt] *)
+  let map f s = fold (fun elt s -> add (f elt) s) s Empty
+  let filter_map f s = fold (fun elt s ->
+      match f elt with
+        | None -> s
+        | Some elt' -> add elt' s)
+    s Empty
+
+  let add_seq seq s = Seq.fold_left (fun s elt -> add elt s) s seq
+
+  let of_seq seq = add_seq seq Empty
+
+  let of_list list = List.fold_left (fun s elt -> add elt s) Empty list
 
   (*s There is no way to give an efficient implementation of [min_elt]
       and [max_elt], as with binary search trees.  The following
@@ -673,10 +711,52 @@ module Hset = struct
     | Leaf k -> k
     | Branch (_,_,s,t) -> min (min_elt s) (min_elt t)
 
+  let min_elt_opt = function
+    | Empty -> None
+    | x -> Some (min_elt x)
+
   let rec max_elt = function
     | Empty -> raise Not_found
     | Leaf k -> k
     | Branch (_,_,s,t) -> max (max_elt s) (max_elt t)
+
+  let max_elt_opt = function
+    | Empty -> None
+    | x -> Some (max_elt x)
+
+  (*s [find_first], [find_last] and their opt versions are less efficient
+      then with binary search trees. They are linear time and can call [f] an
+      arbitrary number of times, and not necessarily on elements smaller/larger
+      than the witness. *)
+  let find_first_opt f s =
+    fold
+      (fun elt acc ->
+        match acc with
+        | None -> if f elt then Some elt else None
+        | Some witness ->
+            if witness.tag <= elt.tag then acc else
+            if f elt then Some elt else acc)
+      s None
+
+  let find_first f s =
+    match find_first_opt f s with
+      | Some elt -> elt
+      | None -> raise Not_found
+
+  let find_last_opt f s =
+    fold
+      (fun elt acc ->
+        match acc with
+        | None -> if f elt then Some elt else None
+        | Some witness ->
+            if witness.tag >= elt.tag then acc else
+            if f elt then Some elt else acc)
+      s None
+
+  let find_last f s =
+    match find_last_opt f s with
+      | Some elt -> elt
+      | None -> raise Not_found
 
   (*s Another nice property of Patricia trees is to be independent of the
       order of insertion. As a consequence, two Patricia trees have the
@@ -706,5 +786,7 @@ module Hset = struct
         intersect s1 (if zero_bit p1 m2 then l2 else r2)
       else
         false
+
+  let disjoint s1 s2 = not (intersect s1 s2)
 end
 

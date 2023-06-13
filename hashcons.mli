@@ -120,21 +120,45 @@ module Hset : sig
   val diff : 'a t -> 'a t -> 'a t
   val equal : 'a t -> 'a t -> bool
   val compare : 'a t -> 'a t -> int
-  val elements : 'a t -> 'a elt list
   val choose : 'a t -> 'a elt
+  val choose_opt : 'a t -> 'a elt option
   val cardinal : 'a t -> int
-  val iter : ('a elt -> unit) -> 'a t -> unit
-  val fold : ('a elt -> 'b -> 'b) -> 'a t -> 'b -> 'b
   val for_all : ('a elt -> bool) -> 'a t -> bool
   val exists : ('a elt -> bool) -> 'a t -> bool
-  val filter : ('a elt -> bool) -> 'a t -> 'a t
   val partition : ('a elt -> bool) -> 'a t -> 'a t * 'a t
+  val disjoint : 'a t -> 'a t -> bool
+  val find : 'a elt -> 'a t -> 'a elt
+  val find_opt :  'a elt -> 'a t -> 'a elt option
+  val add_seq : 'a elt Seq.t -> 'a t -> 'a t
+  val of_seq : 'a elt Seq.t -> 'a t
+  val of_list : 'a elt list -> 'a t
+  val split : 'a elt -> 'a t -> 'a t * bool * 'a t
 
-  (*s Warning: [min_elt] and [max_elt] are linear w.r.t. the size of the
-      set. In other words, [min_elt t] is barely more efficient than [fold
-      min t (choose t)]. *)
+  (*s Warning: [iter], [fold], [map], [filter] and [map_filter] do NOT iterate
+      over element order. Similarly, [elements] and [to_seq] are not sorted. *)
+  val iter : ('a elt -> unit) -> 'a t -> unit
+  val fold : ('a elt -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val map : ('a elt -> 'b elt) -> 'a t -> 'b t
+  val filter : ('a elt -> bool) -> 'a t -> 'a t
+  val filter_map : ('a elt -> 'b elt option) -> 'a t -> 'b t
+  val elements : 'a t -> 'a elt list
+  val to_seq : 'a t -> 'a elt Seq.t
+
+  (*s Warning: [min_elt], [max_elt] and the [_opt] versions are linear w.r.t.
+      the size of the set. In other words, [min_elt t] is barely more efficient
+      than [fold min t (choose t)]. *)
   val min_elt : 'a t -> 'a elt
+  val min_elt_opt : 'a t -> 'a elt option
   val max_elt : 'a t -> 'a elt
+  val max_elt_opt : 'a t -> 'a elt option
+
+  (*s [find_first], [find_last] are linear time and can call [f] an arbitrary
+      number of times, and not necessarily on elements smaller/larger
+      than the witness. *)
+  val find_first : ('a elt -> bool) -> 'a t -> 'a elt
+  val find_first_opt : ('a elt -> bool) -> 'a t -> 'a elt option
+  val find_last : ('a elt -> bool) -> 'a t -> 'a elt
+  val find_last_opt : ('a elt -> bool) -> 'a t -> 'a elt option
 
   (*s Additional functions not appearing in the signature [Set.S] from ocaml
       standard library. *)
