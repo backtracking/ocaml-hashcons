@@ -166,5 +166,14 @@ module Hset : sig
   (* [intersect u v] determines if sets [u] and [v] have a non-empty
      intersection. *)
   val intersect : 'a t -> 'a t -> bool
+
+  (* Faster finds when order doesn't matter *)
+  val find_any : ('a elt -> bool) -> 'a t -> 'a elt
+  val find_any_opt : ('a elt -> bool) -> 'a t -> 'a elt option
+
+  val is_singleton : 'a t -> 'a option
+  (* Check if the set is a singleton, if so return unique element *)
+
+  val bind : ('a -> 'b t) -> 'a t -> 'b t
 end
 

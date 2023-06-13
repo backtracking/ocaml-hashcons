@@ -788,5 +788,25 @@ module Hset = struct
         false
 
   let disjoint s1 s2 = not (intersect s1 s2)
+
+  let find_any (type a) f (s : a t) =
+    let exception Found of a elt in
+    try
+      iter (fun elt -> if f elt then raise (Found elt)) s;
+      raise Not_found
+    with Found elt -> elt
+  let find_any_opt (type a) f (s : a t) =
+    let exception Found of a elt in
+    try
+      iter (fun elt -> if f elt then raise (Found elt)) s;
+      None
+    with Found elt -> Some elt
+
+  let bind f s = fold (fun elt s -> union (f elt) s) s empty
+
+  let is_singleton = function
+    | Leaf elt -> Some elt
+    | _ -> None
+
 end
 
