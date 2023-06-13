@@ -171,9 +171,9 @@ module Hset : sig
   val find_any : ('a elt -> bool) -> 'a t -> 'a elt
   val find_any_opt : ('a elt -> bool) -> 'a t -> 'a elt option
 
-  val is_singleton : 'a t -> 'a option
+  val is_singleton : 'a t -> 'a elt option
   (* Check if the set is a singleton, if so return unique element *)
 
-  val bind : ('a -> 'b t) -> 'a t -> 'b t
+  val bind : ('a elt -> 'b t) -> 'a t -> 'b t
 end
 
