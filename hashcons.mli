@@ -95,14 +95,63 @@ module Hmap : sig
   type 'a key = 'a hash_consed
 
   val empty : ('a, 'b) t
+  val is_empty : ('a, 'b) t -> bool
+  val singleton : 'a key -> 'b -> ('a, 'b) t
   val add : 'a key -> 'b -> ('a, 'b) t -> ('a, 'b) t
   val find : 'a key -> ('a, 'b) t -> 'b
+  val find_opt : 'a key -> ('a, 'b) t -> 'b option
+  val update : 'a key -> ('b option -> 'b option) -> ('a, 'b) t -> ('a, 'b) t
+  val cardinal : ('a, 'b) t -> int
   val remove : 'a key -> ('a, 'b) t -> ('a, 'b) t
   val mem :  'a key -> ('a, 'b) t -> bool
+  val add_seq : ('a key * 'b) Seq.t -> ('a, 'b) t -> ('a, 'b) t
+  val of_seq : ('a key * 'b) Seq.t -> ('a, 'b) t
+  val partition : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a, 'b) t * ('a, 'b) t
+  val choose : ('a, 'b) t -> 'a key * 'b
+  val choose_opt : ('a, 'b) t -> ('a key * 'b) option
+  val split : 'a key -> ('a, 'b) t -> ('a, 'b) t * 'b option * ('a, 'b) t
+  val equal : ('b -> 'b -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+  val compare : ('b -> 'b -> int) -> ('a, 'b) t -> ('a, 'b) t -> int
+  val merge :
+    ('a key -> 'b option -> 'c option -> 'd option) ->
+    ('a, 'b) t -> ('a, 'c) t -> ('a, 'd) t
+  val union :
+    ('a key -> 'b -> 'b -> 'b option) -> ('a, 'b) t -> ('a, 'b) t -> ('a, 'b) t
+
+  (*s Warning: iterators do not iterate following key order *)
   val iter : ('a key -> 'b -> unit) -> ('a, 'b) t -> unit
   val map : ('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   val mapi : ('a key -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   val fold : ('a key -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+  val exists : ('a key -> 'b -> bool) -> ('a, 'b) t -> bool
+  val for_all : ('a key -> 'b -> bool) -> ('a, 'b) t -> bool
+  val filter : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a, 'b) t
+  val filter_map : ('a key -> 'b -> 'c option) -> ('a, 'b) t -> ('a, 'c) t
+
+  (*s Warning: not sorted *)
+  val bindings : ('a, 'b) t -> ('a key * 'b) list
+  val to_seq : ('a, 'b) t -> ('a key * 'b) Seq.t
+
+  (*s Warning: these are linear time w.r.t. the size of the map. *)
+  val min_binding_opt : ('a, 'b) t -> ('a key * 'b) option
+  val max_binding_opt : ('a, 'b) t -> ('a key * 'b) option
+  val min_binding : ('a, 'b) t -> 'a key * 'b
+  val max_binding : ('a, 'b) t -> 'a key * 'b
+
+  (*s Warning: these are linear time w.r.t. the size of the map and can
+      call the function on terms greater/smaller than the witness *)
+  val find_first_opt : ('a key -> bool) -> ('a, 'b) t -> ('a key * 'b) option
+  val find_last_opt : ('a key -> bool) -> ('a, 'b) t -> ('a key * 'b) option
+  val find_first : ('a key -> bool) -> ('a, 'b) t -> 'a key * 'b
+  val find_last : ('a key -> bool) -> ('a, 'b) t -> 'a key * 'b
+
+  (*s Extra functions not in [Map.S], a slightly faster find *)
+  val find_any : ('a key -> 'b -> bool) -> ('a, 'b) t -> 'a key * 'b
+  val find_any_opt : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a key * 'b) option
+
+  val is_singleton : ('a, 'b) t -> ('a key * 'b) option
+    (** if the map is a singleton, return the unique binding, 
+        else return [None] *)
 end
 
 module Hset : sig
