@@ -952,13 +952,12 @@ module Hset = struct
     | _, Leaf _ -> 1
     | Branch (ai, aj, al, ar), Branch (bi, bj, bl, br) ->
         let cmp = Int.compare ai bi in
-        if cmp <> 0 then cmp
-        else
-          let cmp = Int.compare aj bj in
-          if cmp <> 0 then cmp
-          else
-            let cmp = compare al bl in
-            if cmp <> 0 then cmp else compare ar br
+        if cmp <> 0 then cmp else
+        let cmp = Int.compare aj bj in
+        if cmp <> 0 then cmp else
+        let cmp = compare al bl in
+        if cmp <> 0 then cmp else
+        compare ar br
 
   (*i*)
   let _make l = List.fold_right add l empty
