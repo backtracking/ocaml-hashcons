@@ -39,7 +39,22 @@ let omega = app delta delta
 let () = assert (var "x" == x)
 let () = assert (app x x == app x x)
 
+(* y = \f. (\x. f (\y. x x y)) (\x. f (\y. x x y)) *)
+let y =
+  let d = lam "x" (app (var "f") (lam "y" (app (app x x) (var "y")))) in
+  lam "f" (app d d)
 
+let s = Hset.add y (Hset.add delta (Hset.add omega Hset.empty))
+let () = assert (Hset.mem delta s)
+let () = assert (not (Hset.mem x s))
+let () = assert (Hset.equal s s)
+let s = Hset.add (var "x") s
+let () = assert (Hset.mem x s)
 
+let m = Hmap.add y 0 (Hmap.add delta 1 (Hmap.add omega 2 Hmap.empty))
+let () = assert (Hmap.find delta m = 1)
+let () = assert (Hmap.find omega m = 2)
+let () = assert (Hmap.find (app delta delta) m = 2)
+let () = assert (Hmap.equal (==) m m)
 
 

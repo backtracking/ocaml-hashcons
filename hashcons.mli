@@ -150,7 +150,7 @@ module Hmap : sig
   val find_any_opt : ('a key -> 'b -> bool) -> ('a, 'b) t -> ('a key * 'b) option
 
   val is_singleton : ('a, 'b) t -> ('a key * 'b) option
-    (** if the map is a singleton, return the unique binding, 
+    (** if the map is a singleton, return the unique binding,
         else return [None] *)
 end
 
@@ -225,4 +225,3 @@ module Hset : sig
 
   val bind : ('a elt -> 'b t) -> 'a t -> 'b t
 end
-

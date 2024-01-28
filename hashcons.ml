@@ -107,7 +107,7 @@ let hashcons t d =
       add t hnode;
       hnode
     end else begin
-      match Weak.get_copy bucket i with
+      match Weak.get bucket i with
         | Some v when v.node = d ->
 	    begin match Weak.get bucket i with
               | Some v -> v
@@ -238,7 +238,7 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
 	add t hnode;
 	hnode
       end else begin
-        match Weak.get_copy bucket i with
+        match Weak.get bucket i with
         | Some v when H.equal v.node d ->
 	    begin match Weak.get bucket i with
               | Some v -> v
@@ -405,12 +405,12 @@ module Hmap = struct
   let rec filter f = function
     | Empty -> Empty
     | Leaf(k,v) as t -> if f k v then t else Empty
-    | Branch(p,m,t0,t1) -> branch(p,m,filter f t0, filter f t1)
+    | Branch(p,m,t0,t1) -> branch(p, m, filter f t0, filter f t1)
 
   let rec filter_map f = function
     | Empty -> Empty
     | Leaf(k,v) -> (match f k v with Some v' -> Leaf(k,v') | None -> Empty)
-    | Branch(p,m,t0,t1) -> branch(p,m,filter_map f t0, filter_map f t1)
+    | Branch(p,m,t0,t1) -> branch(p, m, filter_map f t0, filter_map f t1)
 
   let split k m =
     fold
@@ -993,8 +993,7 @@ module Hset = struct
       tags), where the standard comparisons will inspect the elements in depth.
        *)
 
-  let rec equal l r =
-    match (l, r) with
+  let rec equal l r = match (l, r) with
     | Empty, Empty -> true
     | Leaf l, Leaf r -> l.tag == r.tag
     | Branch (ai, aj, al, ar), Branch (bi, bj, bl, br) ->
@@ -1002,8 +1001,7 @@ module Hset = struct
     | _ -> false
 
 
-  let rec compare l r =
-    match (l, r) with
+  let rec compare l r = match (l, r) with
     | Empty, Empty -> 0
     | Empty, _ -> -1
     | _, Empty -> 1

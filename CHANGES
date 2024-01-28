@@ -2,6 +2,11 @@
   o fixed performance bugs in weak hash tables implementation,
     by back porting some old fixes from OCaml's `Weak` module
     (reported by Edwin Török)
+  o improved equality functions in Hset and Hmap
+    (contributed by Dorian Lesbre)
+  o a lot of missing functions in Hset and Hmap wrt OCaml's Set and Map,
+    with the notable exception of `to_seq_rev`
+    (contributed by Dorian Lesbre)
 
 version 1.3
 ===========
