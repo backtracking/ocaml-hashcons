@@ -14,7 +14,7 @@ homepage: "https://github.com/backtracking/ocaml-hashcons"
 bug-reports: "https://github.com/backtracking/ocaml-hashcons/issues"
 depends: [
   "dune" {>= "3.9"}
-  "ocaml" {>= "4.07"}
+  "ocaml" {>= "4.12"}
   "odoc" {with-doc}
 ]
 build: [
