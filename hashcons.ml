@@ -45,15 +45,6 @@ let clear t =
   t.totsize <- 0;
   t.limit <- 3
 
-let fold f t init =
-  let rec fold_bucket i b accu =
-    if i >= Weak.length b then accu else
-      match Weak.get b i with
-	| Some v -> fold_bucket (i+1) b (f v accu)
-	| None -> fold_bucket (i+1) b accu
-  in
-  Array.fold_right (fold_bucket 0) t.table init
-
 let iter f t =
   let rec iter_bucket i b =
     if i >= Weak.length b then () else
@@ -78,9 +69,8 @@ let rec resize t =
   if newlen > oldlen then begin
     let newt = create newlen in
     newt.limit <- t.limit + 100;          (* prevent resizing of newt *)
-    fold (fun d () -> add newt d) t ();
+    iter (fun d -> add newt d) t;
     t.table <- newt.table;
-    t.limit <- t.limit + 2;
   end
 
 and add t d =
@@ -186,15 +176,6 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     t.totsize <- 0;
     t.limit <- 3
 
-  let fold f t init =
-    let rec fold_bucket i b accu =
-      if i >= Weak.length b then accu else
-      match Weak.get b i with
-      | Some v -> fold_bucket (i+1) b (f v accu)
-      | None -> fold_bucket (i+1) b accu
-    in
-    Array.fold_right (fold_bucket 0) t.table init
-
   let iter f t =
     let rec iter_bucket i b =
       if i >= Weak.length b then () else
@@ -219,9 +200,8 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     if newlen > oldlen then begin
       let newt = create newlen in
       newt.limit <- t.limit + 100;          (* prevent resizing of newt *)
-      fold (fun d () -> add newt d) t ();
+      iter (fun d -> add newt d) t;
       t.table <- newt.table;
-      t.limit <- t.limit + 2;
     end
 
   and add t d =

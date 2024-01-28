@@ -1,5 +1,6 @@
 
-  o fixed performance bug in weak hash tables implementation
+  o fixed performance bugs in weak hash tables implementation,
+    by back porting some old fixes from OCaml's `Weak` module
     (reported by Edwin Török)
 
 version 1.3
