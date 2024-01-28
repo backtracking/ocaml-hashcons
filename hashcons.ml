@@ -89,7 +89,7 @@ and add t d =
   let sz = Weak.length bucket in
   let rec loop i =
     if i >= sz then begin
-      let newsz = min (sz + 3) (Sys.max_array_length - 1) in
+      let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
       if newsz <= sz then
 	failwith "Hashcons.Make: hash bucket cannot grow more";
       let newbucket = Weak.create newsz in
@@ -230,7 +230,7 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     let sz = Weak.length bucket in
     let rec loop i =
       if i >= sz then begin
-        let newsz = min (sz + 3) (Sys.max_array_length - 1) in
+        let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
         if newsz <= sz then
 	  failwith "Hashcons.Make: hash bucket cannot grow more";
         let newbucket = Weak.create newsz in

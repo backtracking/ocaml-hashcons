@@ -6,3 +6,14 @@
  (name test)
  (modules test)
  (libraries hashcons))
+
+(test
+ (name rule110)
+ (modules rule110)
+ (libraries hashcons))
+
+(test
+ (name test_qs)
+ (modules test_qs)
+ (flags ())
+ (libraries hashcons))

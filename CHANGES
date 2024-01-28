@@ -1,4 +1,7 @@
 
+  o fixed performance bug in weak hash tables implementation
+    (reported by Edwin Török)
+
 version 1.3
 ===========
   o modules Hset and Hmap moved into module Hashcons, to avoid the clash with

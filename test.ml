@@ -39,3 +39,7 @@ let omega = app delta delta
 let () = assert (var "x" == x)
 let () = assert (app x x == app x x)
 
+
+
+
+
