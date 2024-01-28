@@ -11,6 +11,7 @@
  (name rule110)
  (modules rule110)
  (deps quicksort.term)
+ (enabled_if %{arch_sixtyfour})
  (libraries hashcons))
 
 (test
