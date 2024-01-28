@@ -13,4 +13,4 @@ The technique is described in this paper:
 
 
 Note: a different, more elaborated hash-consing library
-      can be found in Why3 sources at http://why3.lri.fr/
+      can be found in Why3 sources at https://gitlab.inria.fr/why3/why3
