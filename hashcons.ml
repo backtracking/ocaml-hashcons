@@ -452,7 +452,7 @@ module Hmap = struct
 
   let rec equal equal_v t1 t2 = match t1, t2 with
     | Empty, Empty -> true
-    | Leaf (k1,v1), Leaf (k2,v2) -> k1 = k2 && equal_v v1 v2
+    | Leaf (k1,v1), Leaf (k2,v2) -> k1.tag == k2.tag && equal_v v1 v2
     | Branch (p1,m1,l1,r1), Branch (p2,m2,l2,r2) ->
         p1 = p2 && m1 = m2 && equal equal_v l1 l2 && equal equal_v r1 r2
     | _ -> false
@@ -906,11 +906,38 @@ module Hset = struct
 
   (*s Another nice property of Patricia trees is to be independent of the
       order of insertion. As a consequence, two Patricia trees have the
-      same elements if and only if they are structurally equal. *)
+      same elements if and only if they are structurally equal.
 
-  let equal = (=)
+      We could use OCaml's [=] and [compare] for this, but it's faster
+      to reimplement them as we have a faster comparison on elements (comparing
+      tags), where the standard comparisons will inspect the elements in depth.
+       *)
 
-  let compare = compare
+  let rec equal l r =
+    match (l, r) with
+    | Empty, Empty -> true
+    | Leaf l, Leaf r -> l.tag == r.tag
+    | Branch (ai, aj, al, ar), Branch (bi, bj, bl, br) ->
+        ai == bi && aj == bj && equal al bl && equal ar br
+    | _ -> false
+
+
+  let rec compare l r =
+    match (l, r) with
+    | Empty, Empty -> 0
+    | Empty, _ -> -1
+    | _, Empty -> 1
+    | Leaf l, Leaf r -> Int.compare l.tag r.tag
+    | Leaf _, _ -> -1
+    | _, Leaf _ -> 1
+    | Branch (ai, aj, al, ar), Branch (bi, bj, bl, br) ->
+        let cmp = Int.compare ai bi in
+        if cmp <> 0 then cmp else
+        let cmp = Int.compare aj bj in
+        if cmp <> 0 then cmp else
+        let cmp = compare al bl in
+        if cmp <> 0 then cmp else
+        compare ar br
 
   (*i*)
   let _make l = List.fold_right add l empty
@@ -933,4 +960,3 @@ module Hset = struct
       else
         false
 end
-
