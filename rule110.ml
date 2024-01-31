@@ -196,13 +196,15 @@ let of_string s =
 
 (* a few tests *)
 
-let test s n b =
-  let c = of_string s in
-  let c = steps n c in
-  assert (bits c = b)
-let () = test "0000000000000000" 1 0
-let () = test "1111111111111111" 1 3
-let () = test "0010000001010100" 0 4
-let () = test "0100011101011100" 1000 595
-let () = test "1010100010111101" 1000000 591649
-let () = test "1010100010111101" 1152921504606846975 682111393702695301
+let test ?(size=32) s n b =
+  if Sys.word_size >= size then (
+    let c = of_string s in
+    let c = steps (int_of_string n) c in
+    assert (bits c = int_of_string b)
+  )
+let () = test "0000000000000000" "1" "0"
+let () = test "1111111111111111" "1" "3"
+let () = test "0010000001010100" "0" "4"
+let () = test "0100011101011100" "1000" "595"
+let () = test "1010100010111101" "1000000" "591649"
+let () = test ~size:64 "1010100010111101" "1152921504606846975" "682111393702695301"
