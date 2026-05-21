@@ -9,7 +9,7 @@ The technique is described in this paper:
   Type-Safe Modular Hash-Consing.
   In ACM SIGPLAN Workshop on ML, Portland, Oregon, September 2006.
 
-  https://www.lri.fr/~filliatr/ftp/publis/hash-consing2.pdf
+  https://usr.lmf.cnrs.fr/~jcf/publis/hash-consing2.pdf
 
 
 Note: a different, more elaborated hash-consing library
