@@ -98,22 +98,23 @@ let hashcons t d =
   let index = hkey mod (Array.length t.table) in
   let bucket = t.table.(index) in
   let sz = Weak.length bucket in
-  let rec loop i =
-    if i >= sz then begin
-      let hnode = { hkey = hkey; tag = gentag (); node = d } in
-      add t hnode;
-      hnode
-    end else begin
-      match Weak.get bucket i with
-        | Some v when v.node = d ->
-	    begin match Weak.get bucket i with
-              | Some v -> v
-              | None -> loop (i+1)
-            end
-        | _ -> loop (i+1)
-    end
-  in
-  loop 0
+  let found = ref None in
+  let i = ref 0 in
+  while !i < sz && Option.is_none !found do
+    match Weak.get bucket !i with
+    | Some v when v.node = d ->
+      begin match Weak.get bucket !i with
+        | Some _ as opt -> found := opt
+        | None -> incr i
+      end
+    | _ -> incr i
+  done;
+  match !found with
+  | Some v -> v
+  | None ->
+    let hnode = { hkey = hkey; tag = gentag (); node = d } in
+    add t hnode;
+    hnode
 
 let stats t =
   let len = Array.length t.table in
@@ -226,22 +227,23 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     let index = hkey mod (Array.length t.table) in
     let bucket = t.table.(index) in
     let sz = Weak.length bucket in
-    let rec loop i =
-      if i >= sz then begin
-	let hnode = { hkey = hkey; tag = gentag (); node = d } in
-	add t hnode;
-	hnode
-      end else begin
-        match Weak.get bucket i with
-        | Some v when H.equal v.node d ->
-	    begin match Weak.get bucket i with
-              | Some v -> v
-              | None -> loop (i+1)
-            end
-        | _ -> loop (i+1)
-      end
-    in
-    loop 0
+    let found = ref None in
+    let i = ref 0 in
+    while !i < sz && Option.is_none !found do
+      match Weak.get bucket !i with
+      | Some v when H.equal v.node d ->
+        begin match Weak.get bucket !i with
+          | Some _ as opt -> found := opt
+          | None -> incr i
+        end
+      | _ -> incr i
+    done;
+    match !found with
+    | Some v -> v
+    | None ->
+      let hnode = { hkey = hkey; tag = gentag (); node = d } in
+      add t hnode;
+      hnode
 
   let stats t =
     let len = Array.length t.table in
