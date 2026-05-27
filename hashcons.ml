@@ -108,11 +108,7 @@ let hashcons t d =
       hnode
     end else begin
       match Weak.get bucket i with
-        | Some v when v.node = d ->
-	    begin match Weak.get bucket i with
-              | Some v -> v
-              | None -> loop (i+1)
-            end
+        | Some v when v.node = d -> v
         | _ -> loop (i+1)
     end
   in
@@ -239,11 +235,7 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
 	hnode
       end else begin
         match Weak.get bucket i with
-        | Some v when H.equal v.node d ->
-	    begin match Weak.get bucket i with
-              | Some v -> v
-              | None -> loop (i+1)
-            end
+        | Some v when H.equal v.node d -> v
         | _ -> loop (i+1)
       end
     in
