@@ -102,11 +102,8 @@ let hashcons t d =
   let i = ref 0 in
   while !i < sz && Option.is_none !found do
     match Weak.get bucket !i with
-    | Some v when v.node = d ->
-      begin match Weak.get bucket !i with
-        | Some _ as opt -> found := opt
-        | None -> incr i
-      end
+    | Some v as opt when v.node = d ->
+      found := opt
     | _ -> incr i
   done;
   match !found with
@@ -231,11 +228,8 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     let i = ref 0 in
     while !i < sz && Option.is_none !found do
       match Weak.get bucket !i with
-      | Some v when H.equal v.node d ->
-        begin match Weak.get bucket !i with
-          | Some _ as opt -> found := opt
-          | None -> incr i
-        end
+      | Some v as opt when H.equal v.node d ->
+        found := opt
       | _ -> incr i
     done;
     match !found with
