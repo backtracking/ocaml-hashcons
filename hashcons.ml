@@ -77,24 +77,21 @@ and add t d =
   let index = d.hkey mod (Array.length t.table) in
   let bucket = t.table.(index) in
   let sz = Weak.length bucket in
-  let rec loop i =
-    if i >= sz then begin
-      let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
-      if newsz <= sz then
-	failwith "Hashcons.Make: hash bucket cannot grow more";
-      let newbucket = Weak.create newsz in
-      Weak.blit bucket 0 newbucket 0 sz;
-      Weak.set newbucket i (Some d);
-      t.table.(index) <- newbucket;
-      t.totsize <- t.totsize + (newsz - sz);
-      if t.totsize > t.limit * Array.length t.table then resize t;
-    end else begin
-      if Weak.check bucket i
-      then loop (i+1)
-      else Weak.set bucket i (Some d)
-    end
-  in
-  loop 0
+  let i = ref 0 in
+  while !i < sz && Weak.check bucket !i do incr i done;
+  if !i < sz then
+    Weak.set bucket !i (Some d)
+  else begin
+    let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
+    if newsz <= sz then
+      failwith "Hashcons.Make: hash bucket cannot grow more";
+    let newbucket = Weak.create newsz in
+    Weak.blit bucket 0 newbucket 0 sz;
+    Weak.set newbucket sz (Some d);
+    t.table.(index) <- newbucket;
+    t.totsize <- t.totsize + (newsz - sz);
+    if t.totsize > t.limit * Array.length t.table then resize t;
+  end
 
 let hashcons t d =
   let hkey = Hashtbl.hash d land max_int in
@@ -208,24 +205,21 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
     let index = d.hkey mod (Array.length t.table) in
     let bucket = t.table.(index) in
     let sz = Weak.length bucket in
-    let rec loop i =
-      if i >= sz then begin
-        let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
-        if newsz <= sz then
-	  failwith "Hashcons.Make: hash bucket cannot grow more";
-        let newbucket = Weak.create newsz in
-        Weak.blit bucket 0 newbucket 0 sz;
-        Weak.set newbucket i (Some d);
-        t.table.(index) <- newbucket;
-        t.totsize <- t.totsize + (newsz - sz);
-        if t.totsize > t.limit * Array.length t.table then resize t;
-      end else begin
-        if Weak.check bucket i
-        then loop (i+1)
-        else Weak.set bucket i (Some d)
-      end
-    in
-    loop 0
+    let i = ref 0 in
+    while !i < sz && Weak.check bucket !i do incr i done;
+    if !i < sz then
+      Weak.set bucket !i (Some d)
+    else begin
+      let newsz = min (3 * sz / 2 + 3) (Sys.max_array_length - 1) in
+      if newsz <= sz then
+        failwith "Hashcons.Make: hash bucket cannot grow more";
+      let newbucket = Weak.create newsz in
+      Weak.blit bucket 0 newbucket 0 sz;
+      Weak.set newbucket sz (Some d);
+      t.table.(index) <- newbucket;
+      t.totsize <- t.totsize + (newsz - sz);
+      if t.totsize > t.limit * Array.length t.table then resize t;
+    end
 
   let hashcons t d =
     let hkey = H.hash d land max_int in
