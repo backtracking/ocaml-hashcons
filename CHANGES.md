@@ -1,4 +1,6 @@
 
+  - several optimizations (#16 #17 #18, contributed by Simmo Saan)
+
 # 1.4.0
   - fixed performance bugs in weak hash tables implementation,
     by back porting some old fixes from OCaml's `Weak` module
