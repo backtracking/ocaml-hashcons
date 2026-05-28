@@ -1,4 +1,5 @@
 
+  - fixed updating of `totsize` (reported by benjub@github)
   - several optimizations (#16 #17 #18, contributed by Simmo Saan)
 
 # 1.4.0

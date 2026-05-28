@@ -71,6 +71,7 @@ let rec resize t =
     newt.limit <- t.limit + 100;          (* prevent resizing of newt *)
     iter (fun d -> add newt d) t;
     t.table <- newt.table;
+    t.totsize <- newt.totsize
   end
 
 and add t d =
@@ -197,6 +198,7 @@ module Make(H : HashedType) : (S with type key = H.t) = struct
       newt.limit <- t.limit + 100;          (* prevent resizing of newt *)
       iter (fun d -> add newt d) t;
       t.table <- newt.table;
+      t.totsize <- newt.totsize
     end
 
   and add t d =
